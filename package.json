@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "config": "node set-env.js",
+    "start": "npm run config && ng serve",
+    "build": "npm run config && ng build",
+    "watch": "npm run config && ng build --watch --configuration development",
     "test": "ng test"
   },
   "private": true,
@@ -26,6 +27,7 @@
     "@angular/compiler-cli": "^21.2.0",
     "@tailwindcss/postcss": "^4.3.0",
     "autoprefixer": "^10.5.0",
+    "dotenv": "^17.4.2",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.15",
     "prettier": "^3.8.1",
