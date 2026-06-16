@@ -1,0 +1,109 @@
+name: Frontend - CI/CD Pipeline con Telegram
+
+on:
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    branches: [ "develop" ]
+
+permissions:
+  contents: write
+
+jobs:
+  # ==========================================
+  # JOB 1: PROMOCIÓN A TEST
+  # ==========================================
+  promote-to-test:
+    name: Promover código de Develop a Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Configurar Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+      - name: Realizar Merge de Develop a Test
+        run: |
+          git checkout test || git checkout -b test
+          git merge origin/develop --no-edit
+          git push origin test
+
+  # ==========================================
+  # JOB 2: PRUEBAS FRONTEND
+  # ==========================================
+  run-tests:
+    name: Compilación y Pruebas (Angular)
+    needs: promote-to-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código de la rama Test
+        uses: actions/checkout@v4
+        with:
+          ref: test
+          
+      - name: Configurar Entorno Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: Instalar Dependencias y Compilar
+        run: |
+          npm install
+          cp src/environments/environment.example.ts src/environments/environment.ts
+          cp src/environments/environment.example.ts src/environments/environment.prod.ts
+          npx ng build --configuration production
+
+  # ==========================================
+  # JOB 3: PROMOCIÓN A MAIN
+  # ==========================================
+  promote-to-main:
+    name: Promover código de Test a Main
+    needs: run-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Configurar Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+      - name: Realizar Merge de Test a Main
+        run: |
+          git checkout main
+          git merge origin/test --no-edit
+          git push origin main
+
+  # ==========================================
+  # JOB 4: NOTIFICACIÓN DE TELEGRAM
+  # ==========================================
+  notify-telegram:
+    name: Notificación a Telegram
+    needs: [promote-to-test, run-tests, promote-to-main]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar mensaje de Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            📢 *Frontend CI/CD Pipeline* 📢
+            Repositorio: ${{ github.repository }}
+            Autor: ${{ github.actor }}
+            
+            Resultados:
+            - A Test: ${{ needs.promote-to-test.result }}
+            - Pruebas/Build: ${{ needs.run-tests.result }}
+            - A Main: ${{ needs.promote-to-main.result }}
+            
+            [Ver Detalles](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
