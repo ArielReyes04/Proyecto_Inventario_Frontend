@@ -1,10 +1,11 @@
 const fs = require('fs');
+require('dotenv').config();
 
 const targetPath = './src/environments/environment.prod.ts';
 const targetPathDev = './src/environments/environment.ts';
 
-// Puedes configurar esto en Vercel como variable de entorno
-const apiUrl = process.env.API_URL || 'https://proyectoinventariobackend-production.up.railway.app';
+// Puedes configurar esto en Vercel como variable de entorno o en tu archivo .env local
+const apiUrl = process.env.API_URL || 'http://localhost:8080';
 
 const envConfigFile = `export const environment = {
   production: true,
