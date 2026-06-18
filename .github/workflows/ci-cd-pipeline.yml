@@ -40,6 +40,8 @@ jobs:
     name: Compilación y Pruebas (Angular)
     needs: promote-to-test
     runs-on: ubuntu-latest
+    outputs:
+      test_summary: ${{ steps.extract-summary.outputs.test_summary }}
     steps:
       - name: Descargar código a testear
         uses: actions/checkout@v4
@@ -67,6 +69,12 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
+      - name: Extraer Resumen de Pruebas
+        id: extract-summary
+        run: |
+          TEST_SUMMARY=$(grep -i "SUCCESS" evidencias/frontend_tests.log | tail -n 1 | xargs) || TEST_SUMMARY="No se encontró resumen de pruebas"
+          echo "test_summary=$TEST_SUMMARY" >> $GITHUB_OUTPUT
+
       - name: Guardar evidencias
         uses: actions/upload-artifact@v4
         if: always()
@@ -122,4 +130,10 @@ jobs:
             - Pruebas/Build: ${{ needs.run-tests.result }}
             - A Main: ${{ needs.promote-to-main.result }}
             
-            [Ver Detalles](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            📊 *Resumen de Pruebas:*
+            ${{ needs.run-tests.outputs.test_summary }}
+            
+            🔍 *SonarCloud Dashboard:*
+            [Ver Análisis](https://sonarcloud.io/dashboard?id=ferreteria-kanos_frontend)
+            
+            🔗 [Ver Detalles de GitHub Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
