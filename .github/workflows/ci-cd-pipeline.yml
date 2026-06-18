@@ -65,9 +65,12 @@ jobs:
           npm install
           cp src/environments/environment.example.ts src/environments/environment.ts
           cp src/environments/environment.example.ts src/environments/environment.prod.ts
-          # Pruebas automatizadas con ChromeHeadless (log a archivo)
-          npm run test -- --watch=false --browsers=ChromeHeadless > evidencias/frontend_tests.log 2>&1 || true
+          # Pruebas automatizadas (log a archivo)
+          npm run test -- --watch=false > evidencias/frontend_tests.log 2>&1 || true
           npx ng build --configuration production
+          
+      - name: Debug Output
+        run: cat evidencias/frontend_tests.log
           
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
