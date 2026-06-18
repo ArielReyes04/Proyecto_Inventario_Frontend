@@ -51,7 +51,7 @@ describe('LoginComponent', () => {
     component.onSubmit();
     
     expect(mockAuthService.login).toHaveBeenCalledWith({ username: 'testuser', password: 'password' });
-    expect(component.isLoading).toBeFalse();
+    expect(component.isLoading).toBe(false);
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/home']);
   });
 
@@ -64,7 +64,7 @@ describe('LoginComponent', () => {
     component.onSubmit();
     
     expect(mockAuthService.login).toHaveBeenCalled();
-    expect(component.isLoading).toBeFalse();
+    expect(component.isLoading).toBe(false);
     expect(component.errorMsg).toBe('Credenciales inválidas. Por favor intente de nuevo.');
   });
 });

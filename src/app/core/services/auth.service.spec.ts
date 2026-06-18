@@ -36,7 +36,7 @@ describe('AuthService', () => {
       expect(user).toBeTruthy();
       expect(user?.username).toBe('testuser');
       expect(user?.roles).toContain('Administrador');
-      expect(service.isAdmin()).toBeTrue();
+      expect(service.isAdmin()).toBe(true);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
