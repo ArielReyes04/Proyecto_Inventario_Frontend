@@ -5,15 +5,21 @@ import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/services/auth.service';
 
+import { vi } from 'vitest';
+
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
-  let mockAuthService: jasmine.SpyObj<AuthService>;
-  let mockRouter: jasmine.SpyObj<Router>;
+  let mockAuthService: any;
+  let mockRouter: any;
 
   beforeEach(async () => {
-    mockAuthService = jasmine.createSpyObj('AuthService', ['login']);
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockAuthService = {
+      login: vi.fn()
+    };
+    mockRouter = {
+      navigate: vi.fn()
+    };
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent, ReactiveFormsModule],
@@ -46,7 +52,7 @@ describe('LoginComponent', () => {
     component.loginForm.controls['username'].setValue('testuser');
     component.loginForm.controls['password'].setValue('password');
     
-    mockAuthService.login.and.returnValue(of({ token: 'fake-token' }));
+    mockAuthService.login.mockReturnValue(of({ token: 'fake-token' }));
     
     component.onSubmit();
     
@@ -59,7 +65,7 @@ describe('LoginComponent', () => {
     component.loginForm.controls['username'].setValue('testuser');
     component.loginForm.controls['password'].setValue('wrong-password');
     
-    mockAuthService.login.and.returnValue(throwError(() => new Error('Invalid credentials')));
+    mockAuthService.login.mockReturnValue(throwError(() => new Error('Invalid credentials')));
     
     component.onSubmit();
     
