@@ -41,10 +41,9 @@ jobs:
     needs: promote-to-test
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar código de la rama Test
+      - name: Descargar código a testear
         uses: actions/checkout@v4
         with:
-          ref: test
           fetch-depth: 0
           
       - name: Configurar Entorno Node.js
@@ -75,7 +74,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add evidencias/
           git commit -m "chore: agregar evidencias de pruebas y sonar [skip ci]" || echo "No hay cambios en evidencias"
-          git push origin test
+          git push origin HEAD:test
 
   # ==========================================
   # JOB 3: PROMOCIÓN A MAIN
