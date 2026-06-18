@@ -41,7 +41,12 @@ jobs:
     needs: promote-to-test
     runs-on: ubuntu-latest
     outputs:
-      test_summary: ${{ steps.extract-summary.outputs.test_summary }}
+      run: ${{ steps.extract-summary.outputs.run }}
+      success: ${{ steps.extract-summary.outputs.success }}
+      fail: ${{ steps.extract-summary.outputs.fail }}
+      bugs: ${{ steps.extract-summary.outputs.bugs }}
+      vulns: ${{ steps.extract-summary.outputs.vulns }}
+      smells: ${{ steps.extract-summary.outputs.smells }}
     steps:
       - name: Descargar código a testear
         uses: actions/checkout@v4
