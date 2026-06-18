@@ -1,0 +1,17 @@
+name: Restrict PRs to Main
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  check-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar si la rama de origen es test
+        run: |
+          echo "La rama de origen es: ${{ github.head_ref }}"
+          if [ "${{ github.head_ref }}" != "test" ]; then
+            echo "Error: Sólo se permiten Pull Requests hacia main que vengan desde la rama test."
+            exit 1
+          fi
+          echo "Validación exitosa: El PR proviene de la rama test."
