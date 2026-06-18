@@ -67,15 +67,12 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Guardar evidencias en rama test
-        run: |
-          # Simular log de sonar y agregarlo a evidencias
-          echo "Análisis SonarQube completado. Revisa el dashboard en SonarCloud/SonarQube." > evidencias/frontend_sonar.log
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add evidencias/
-          git commit -m "chore: agregar evidencias de pruebas y sonar [skip ci]" || echo "No hay cambios en evidencias"
-          git push origin HEAD:test
+      - name: Guardar evidencias
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidencias-frontend
+          path: evidencias/
 
   # ==========================================
   # JOB 3: PROMOCIÓN A MAIN
