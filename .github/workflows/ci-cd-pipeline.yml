@@ -47,6 +47,7 @@ jobs:
       bugs: ${{ steps.extract-summary.outputs.bugs }}
       vulns: ${{ steps.extract-summary.outputs.vulns }}
       smells: ${{ steps.extract-summary.outputs.smells }}
+      test_details: ${{ steps.extract-summary.outputs.test_details }}
     steps:
       - name: Descargar código a testear
         uses: actions/checkout@v4
@@ -89,15 +90,23 @@ jobs:
           # Limpiar colores ANSI del log
           perl -pe 's/\e\[[0-9;]*[mK]//g' evidencias/frontend_tests.log > clean.log
           
-          # Extraer pruebas Karma/Jasmine
-          TEST_LINE=$(grep -i "Executed" clean.log | tail -n 1) || true
-          if [ -z "$TEST_LINE" ]; then
-            RUN=0; FAIL=0
-          else
+          # Extraer pruebas Vitest/Karma
+          TEST_LINE=$(grep "Tests " clean.log | tail -n 1) || true
+          if [ -z "$TEST_LINE" ] || [[ "$TEST_LINE" != *"passed"* && "$TEST_LINE" != *"failed"* ]]; then
+            # Fallback a karma si no es vitest
+            TEST_LINE=$(grep -i "Executed" clean.log | tail -n 1) || true
             RUN=$(echo "$TEST_LINE" | grep -oP 'Executed \K\d+' || echo "0")
             FAIL=$(echo "$TEST_LINE" | grep -oP '\K\d+(?= FAILED)' || echo "0")
+          else
+            # Vitest parsing
+            RUN=$(echo "$TEST_LINE" | grep -oP '\(\K\d+' || echo "0")
+            FAIL=$(echo "$TEST_LINE" | grep -oP '\d+(?= failed)' || echo "0")
           fi
           SUCCESS=$((RUN - FAIL))
+          
+          # Extraer detalles específicos
+          TEST_DETAILS=$(grep "spec.ts" clean.log | grep -v "Test Files" | sed -E 's/.*src\/app\/(.*\.spec\.ts)(.*)/  👉 \1/g' | head -n 15)
+          if [ -z "$TEST_DETAILS" ]; then TEST_DETAILS="  Sin detalles específicos"; fi
           
           # Extraer métricas SonarCloud usando API
           METRICS_JSON=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/measures/component?component=ferreteria-kanos_frontend&metricKeys=bugs,vulnerabilities,code_smells,coverage")
@@ -111,6 +120,11 @@ jobs:
           echo "bugs=$BUGS" >> $GITHUB_OUTPUT
           echo "vulns=$VULNS" >> $GITHUB_OUTPUT
           echo "smells=$SMELLS" >> $GITHUB_OUTPUT
+          
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "test_details<<$EOF" >> $GITHUB_OUTPUT
+          echo "$TEST_DETAILS" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
 
       - name: Guardar evidencias
         uses: actions/upload-artifact@v4
@@ -165,10 +179,9 @@ jobs:
             - Pruebas y Sonar: ${{ needs.run-tests.result }}
             - A Main: ${{ needs.promote-to-main.result }}
             
-            🧪 *Tabla de Pruebas:*
-            | Total | Éxito | Fallos |
-            |-------|-------|--------|
-            | ${{ needs.run-tests.outputs.run }} | ${{ needs.run-tests.outputs.success }} | ${{ needs.run-tests.outputs.fail }} |
+            🧪 *Detalles de Pruebas:*
+            Total: ${{ needs.run-tests.outputs.run }} | Éxitos: ${{ needs.run-tests.outputs.success }} | Fallos: ${{ needs.run-tests.outputs.fail }}
+            ${{ needs.run-tests.outputs.test_details }}
             
             🛡️ *Calidad SonarCloud:*
             - Bugs: ${{ needs.run-tests.outputs.bugs }}
