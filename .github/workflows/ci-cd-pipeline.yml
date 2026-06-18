@@ -41,7 +41,12 @@ jobs:
     needs: promote-to-test
     runs-on: ubuntu-latest
     outputs:
-      test_summary: ${{ steps.extract-summary.outputs.test_summary }}
+      run: ${{ steps.extract-summary.outputs.run }}
+      success: ${{ steps.extract-summary.outputs.success }}
+      fail: ${{ steps.extract-summary.outputs.fail }}
+      bugs: ${{ steps.extract-summary.outputs.bugs }}
+      vulns: ${{ steps.extract-summary.outputs.vulns }}
+      smells: ${{ steps.extract-summary.outputs.smells }}
     steps:
       - name: Descargar código a testear
         uses: actions/checkout@v4
@@ -72,11 +77,33 @@ jobs:
           args: >
             -Dsonar.branch.name=master
           
-      - name: Extraer Resumen de Pruebas
+      - name: SonarQube Quality Gate check
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
+      - name: Extraer Métricas y Resumen de Pruebas
         id: extract-summary
         run: |
-          TEST_SUMMARY=$(grep -i "SUCCESS" evidencias/frontend_tests.log | tail -n 1 | xargs) || TEST_SUMMARY="No se encontró resumen de pruebas"
-          echo "test_summary=$TEST_SUMMARY" >> $GITHUB_OUTPUT
+          # Extraer pruebas Karma/Jasmine
+          TEST_LINE=$(grep -i "Executed" evidencias/frontend_tests.log | tail -n 1) || true
+          RUN=$(echo $TEST_LINE | grep -oP 'Executed \K\d+' || echo "0")
+          FAIL=$(echo $TEST_LINE | grep -oP '\K\d+(?= FAILED)' || echo "0")
+          SUCCESS=$((RUN - FAIL))
+          
+          # Extraer métricas SonarCloud usando API
+          METRICS_JSON=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/measures/component?component=ferreteria-kanos_frontend&metricKeys=bugs,vulnerabilities,code_smells,coverage")
+          BUGS=$(echo $METRICS_JSON | jq -r '.component.measures[] | select(.metric=="bugs") | .value' 2>/dev/null || echo "N/A")
+          VULNS=$(echo $METRICS_JSON | jq -r '.component.measures[] | select(.metric=="vulnerabilities") | .value' 2>/dev/null || echo "N/A")
+          SMELLS=$(echo $METRICS_JSON | jq -r '.component.measures[] | select(.metric=="code_smells") | .value' 2>/dev/null || echo "N/A")
+          
+          echo "run=$RUN" >> $GITHUB_OUTPUT
+          echo "success=$SUCCESS" >> $GITHUB_OUTPUT
+          echo "fail=$FAIL" >> $GITHUB_OUTPUT
+          echo "bugs=$BUGS" >> $GITHUB_OUTPUT
+          echo "vulns=$VULNS" >> $GITHUB_OUTPUT
+          echo "smells=$SMELLS" >> $GITHUB_OUTPUT
 
       - name: Guardar evidencias
         uses: actions/upload-artifact@v4
@@ -126,17 +153,20 @@ jobs:
           message: |
             📢 *Frontend CI/CD Pipeline* 📢
             Repositorio: ${{ github.repository }}
-            Autor: ${{ github.actor }}
             
             Resultados:
-            - A Test: ${{ needs.promote-to-test.result }}
-            - Pruebas/Build: ${{ needs.run-tests.result }}
+            - Pruebas y Sonar: ${{ needs.run-tests.result }}
             - A Main: ${{ needs.promote-to-main.result }}
             
-            📊 *Resumen de Pruebas:*
-            ${{ needs.run-tests.outputs.test_summary }}
+            🧪 *Tabla de Pruebas:*
+            | Total | Éxito | Fallos |
+            |-------|-------|--------|
+            | ${{ needs.run-tests.outputs.run }} | ${{ needs.run-tests.outputs.success }} | ${{ needs.run-tests.outputs.fail }} |
             
-            🔍 *SonarCloud Dashboard:*
-            [Ver Análisis](https://sonarcloud.io/dashboard?id=ferreteria-kanos_frontend)
+            🛡️ *Calidad SonarCloud:*
+            - Bugs: ${{ needs.run-tests.outputs.bugs }}
+            - Vulnerabilidades: ${{ needs.run-tests.outputs.vulns }}
+            - Code Smells: ${{ needs.run-tests.outputs.smells }}
             
-            🔗 [Ver Detalles de GitHub Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            🔍 [Ver Análisis SonarCloud](https://sonarcloud.io/dashboard?id=ferreteria-kanos_frontend)
+            🔗 [Ver Detalles Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
