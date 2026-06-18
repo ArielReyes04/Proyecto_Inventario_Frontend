@@ -86,10 +86,17 @@ jobs:
       - name: Extraer Métricas y Resumen de Pruebas
         id: extract-summary
         run: |
+          # Limpiar colores ANSI del log
+          perl -pe 's/\e\[[0-9;]*[mK]//g' evidencias/frontend_tests.log > clean.log
+          
           # Extraer pruebas Karma/Jasmine
-          TEST_LINE=$(grep -i "Executed" evidencias/frontend_tests.log | tail -n 1) || true
-          RUN=$(echo $TEST_LINE | grep -oP 'Executed \K\d+' || echo "0")
-          FAIL=$(echo $TEST_LINE | grep -oP '\K\d+(?= FAILED)' || echo "0")
+          TEST_LINE=$(grep -i "Executed" clean.log | tail -n 1) || true
+          if [ -z "$TEST_LINE" ]; then
+            RUN=0; FAIL=0
+          else
+            RUN=$(echo "$TEST_LINE" | grep -oP 'Executed \K\d+' || echo "0")
+            FAIL=$(echo "$TEST_LINE" | grep -oP '\K\d+(?= FAILED)' || echo "0")
+          fi
           SUCCESS=$((RUN - FAIL))
           
           # Extraer métricas SonarCloud usando API
