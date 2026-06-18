@@ -63,8 +63,6 @@ jobs:
         run: |
           mkdir -p evidencias
           npm install
-          cp src/environments/environment.example.ts src/environments/environment.ts
-          cp src/environments/environment.example.ts src/environments/environment.prod.ts
           # Pruebas automatizadas (log a archivo)
           npm run test -- --watch=false > evidencias/frontend_tests.log 2>&1 || true
           npx ng build --configuration production
