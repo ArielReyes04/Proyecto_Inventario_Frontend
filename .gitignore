@@ -45,3 +45,4 @@ Thumbs.db
 
 # Sensitive environments
 src/environments/environment.ts
+.env
