@@ -40,6 +40,8 @@ jobs:
     name: Compilación y Pruebas (Angular)
     needs: promote-to-test
     runs-on: ubuntu-latest
+    outputs:
+      test_summary: ${{ steps.extract-summary.outputs.test_summary }}
     steps:
       - name: Descargar código a testear
         uses: actions/checkout@v4
@@ -65,16 +67,20 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Guardar evidencias en rama test
+      - name: Extraer Resumen de Pruebas
+        id: extract-summary
         run: |
-          # Simular log de sonar y agregarlo a evidencias
-          echo "Análisis SonarQube completado. Revisa el dashboard en SonarCloud/SonarQube." > evidencias/frontend_sonar.log
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add evidencias/
-          git commit -m "chore: agregar evidencias de pruebas y sonar [skip ci]" || echo "No hay cambios en evidencias"
-          git push origin HEAD:test
+          TEST_SUMMARY=$(grep -i "SUCCESS" evidencias/frontend_tests.log | tail -n 1 | xargs) || TEST_SUMMARY="No se encontró resumen de pruebas"
+          echo "test_summary=$TEST_SUMMARY" >> $GITHUB_OUTPUT
+
+      - name: Guardar evidencias
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidencias-frontend
+          path: evidencias/
 
   # ==========================================
   # JOB 3: PROMOCIÓN A MAIN
@@ -124,4 +130,10 @@ jobs:
             - Pruebas/Build: ${{ needs.run-tests.result }}
             - A Main: ${{ needs.promote-to-main.result }}
             
-            [Ver Detalles](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            📊 *Resumen de Pruebas:*
+            ${{ needs.run-tests.outputs.test_summary }}
+            
+            🔍 *SonarCloud Dashboard:*
+            [Ver Análisis](https://sonarcloud.io/dashboard?id=ferreteria-kanos_frontend)
+            
+            🔗 [Ver Detalles de GitHub Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
