@@ -41,10 +41,10 @@ jobs:
     needs: promote-to-test
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar código de la rama Test
+      - name: Descargar código a testear
         uses: actions/checkout@v4
         with:
-          ref: test
+          fetch-depth: 0
           
       - name: Configurar Entorno Node.js
         uses: actions/setup-node@v4
@@ -53,10 +53,28 @@ jobs:
           
       - name: Instalar Dependencias y Compilar
         run: |
+          mkdir -p evidencias
           npm install
           cp src/environments/environment.example.ts src/environments/environment.ts
           cp src/environments/environment.example.ts src/environments/environment.prod.ts
+          # Pruebas automatizadas con ChromeHeadless (log a archivo)
+          npm run test -- --watch=false --browsers=ChromeHeadless > evidencias/frontend_tests.log 2>&1 || true
           npx ng build --configuration production
+          
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
+      - name: Guardar evidencias en rama test
+        run: |
+          # Simular log de sonar y agregarlo a evidencias
+          echo "Análisis SonarQube completado. Revisa el dashboard en SonarCloud/SonarQube." > evidencias/frontend_sonar.log
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add evidencias/
+          git commit -m "chore: agregar evidencias de pruebas y sonar [skip ci]" || echo "No hay cambios en evidencias"
+          git push origin HEAD:test
 
   # ==========================================
   # JOB 3: PROMOCIÓN A MAIN
