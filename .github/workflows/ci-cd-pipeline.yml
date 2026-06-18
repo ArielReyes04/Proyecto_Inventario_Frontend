@@ -87,8 +87,8 @@ jobs:
       - name: Extraer Métricas y Resumen de Pruebas
         id: extract-summary
         run: |
-          # Limpiar colores ANSI del log
-          perl -pe 's/\e\[[0-9;]*[mK]//g' evidencias/frontend_tests.log > clean.log
+          # Limpiar TODOS los colores y códigos de control ANSI del log
+          perl -pe 's/\x1b\[[0-9;]*[a-zA-Z]//g' evidencias/frontend_tests.log > clean.log
           
           # Extraer pruebas Vitest/Karma
           TEST_LINE=$(grep "Tests " clean.log | tail -n 1) || true
@@ -97,15 +97,16 @@ jobs:
             TEST_LINE=$(grep -i "Executed" clean.log | tail -n 1) || true
             RUN=$(echo "$TEST_LINE" | grep -oP 'Executed \K\d+' || echo "0")
             FAIL=$(echo "$TEST_LINE" | grep -oP '\K\d+(?= FAILED)' || echo "0")
+            SUCCESS=$((RUN - FAIL))
           else
-            # Vitest parsing
-            RUN=$(echo "$TEST_LINE" | grep -oP '\(\K\d+' || echo "0")
-            FAIL=$(echo "$TEST_LINE" | grep -oP '\d+(?= failed)' || echo "0")
+            # Vitest parsing más robusto
+            SUCCESS=$(echo "$TEST_LINE" | grep -oP '\d+(?=\s+passed)' | tail -n 1 || echo "0")
+            FAIL=$(echo "$TEST_LINE" | grep -oP '\d+(?=\s+failed)' | tail -n 1 || echo "0")
+            RUN=$((SUCCESS + FAIL))
           fi
-          SUCCESS=$((RUN - FAIL))
           
           # Extraer detalles específicos
-          TEST_DETAILS=$(grep "spec.ts" clean.log | grep -v "Test Files" | sed -E 's/.*src\/app\/(.*\.spec\.ts)(.*)/  👉 \1/g' | head -n 15)
+          TEST_DETAILS=$(grep "\.spec\.ts" clean.log | grep -v "Test Files" | awk '{for(i=1;i<=NF;i++) if($i ~ /\.spec\.ts/) print "  👉 "$i}' | head -n 15)
           if [ -z "$TEST_DETAILS" ]; then TEST_DETAILS="  Sin detalles específicos"; fi
           
           # Extraer métricas SonarCloud usando API
