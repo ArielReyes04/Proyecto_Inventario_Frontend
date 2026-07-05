@@ -64,7 +64,7 @@ jobs:
           mkdir -p evidencias
           npm install
           # Pruebas automatizadas (log a archivo)
-          npm run test -- --watch=false > evidencias/frontend_tests.log 2>&1 || true
+          npm run test > evidencias/frontend_tests.log 2>&1 || true
           npx ng build --configuration production
           
       - name: Debug Output
