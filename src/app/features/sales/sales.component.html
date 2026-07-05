@@ -1,0 +1,111 @@
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900 leading-tight">Registro de Ventas (Punto de Venta)</h2>
+      <p class="mt-1 text-sm text-gray-500">Busque productos, añádalos al carrito y genere el comprobante de salida.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Panel Izquierdo: Formulario y Búsqueda -->
+    <div class="lg:col-span-1 space-y-6">
+      
+      <!-- Datos del Comprobante -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Datos de Venta</h3>
+        <form [formGroup]="salesForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Número de Comprobante</label>
+            <input type="text" formControlName="receiptNumber" 
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+          </div>
+        </form>
+      </div>
+
+      <!-- Buscador de Productos -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Agregar Producto</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Seleccione Producto</label>
+            <select (change)="onProductSelect($event)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+              <option value="">-- Seleccionar --</option>
+              @for (p of products; track p.id) {
+                <option [value]="p.id">{{ p.name }} (Stock: {{ p.currentStock }}) - ${{ p.salePrice }}</option>
+              }
+            </select>
+          </div>
+          
+          @if (selectedProduct) {
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Cantidad</label>
+              <div class="flex items-center space-x-2 mt-1">
+                <input type="number" min="1" [max]="selectedProduct.currentStock" [(ngModel)]="quantityToAdd" 
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                <button (click)="addToCart()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  Añadir
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Derecho: Carrito de Compras -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-full flex flex-col">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Detalle de la Venta</h3>
+        
+        <div class="flex-grow overflow-auto">
+          @if (cart.length === 0) {
+            <div class="text-center py-12">
+              <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">Carrito Vacío</h3>
+              <p class="mt-1 text-sm text-gray-500">Seleccione un producto para añadirlo a la venta.</p>
+            </div>
+          } @else {
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                  <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cant.</th>
+                  <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P. Unit</th>
+                  <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                  <th scope="col" class="relative px-6 py-3"><span class="sr-only">Quitar</span></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                @for (item of cart; track item.productId; let i = $index) {
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.productName }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ item.quantity }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${{ item.unitPrice | number:'1.2-2' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">${{ item.subtotal | number:'1.2-2' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button (click)="removeFromCart(i)" class="text-red-600 hover:text-red-900 font-semibold">Eliminar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+        <div class="mt-6 border-t pt-4">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-lg font-medium text-gray-900">Total a Pagar:</span>
+            <span class="text-2xl font-bold text-indigo-600">${{ total | number:'1.2-2' }}</span>
+          </div>
+          <button (click)="confirmSale()" 
+                  [disabled]="cart.length === 0 || salesForm.invalid || isSubmitting"
+                  class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ isSubmitting ? 'Procesando...' : 'Confirmar Venta' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
