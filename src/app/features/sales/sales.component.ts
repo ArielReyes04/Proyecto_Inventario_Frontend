@@ -27,6 +27,19 @@ export class SalesComponent implements OnInit {
   total: number = 0;
   isSubmitting = false;
 
+  // Variables para el Select buscador (estilo Select2)
+  searchTerm: string = '';
+  isDropdownOpen: boolean = false;
+
+  // Variables para Modal personalizado
+  modalConfig = {
+    isVisible: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'info',
+    onClose: () => {}
+  };
+
   constructor() {
     this.salesForm = this.fb.group({
       receiptNumber: ['', Validators.required],
@@ -47,22 +60,41 @@ export class SalesComponent implements OnInit {
       next: (data) => {
         // Filtramos solo los que tienen stock > 0 para ventas
         this.products = data.filter(p => p.currentStock > 0);
-        this.cdr.detectChanges(); // Forzamos el renderizado del select
+        this.cdr.detectChanges(); // Forzamos el renderizado
       },
-      error: (err) => console.error('Error cargando productos', err)
+      error: (err) => {
+        console.error('Error cargando productos', err);
+        this.showModal('Error', 'No se pudieron cargar los productos.', 'error');
+      }
     });
   }
 
-  onProductSelect(event: any) {
-    const productId = event.target.value;
-    this.selectedProduct = this.products.find(p => p.id === productId);
+  // Getter para los productos filtrados
+  get filteredProducts() {
+    if (!this.searchTerm) return this.products;
+    const term = this.searchTerm.toLowerCase();
+    return this.products.filter(p => p.name.toLowerCase().includes(term));
+  }
+
+  selectProduct(product: any) {
+    this.selectedProduct = product;
+    this.searchTerm = product.name; // Mostrar el nombre del producto en el input
+    this.isDropdownOpen = false;
+    this.quantityToAdd = 1;
+  }
+
+  clearSelection() {
+    this.selectedProduct = null;
+    this.searchTerm = '';
+    this.isDropdownOpen = true;
+    this.quantityToAdd = 1;
   }
 
   addToCart() {
     if (!this.selectedProduct || this.quantityToAdd <= 0) return;
 
     if (this.quantityToAdd > this.selectedProduct.currentStock) {
-      alert(`No hay stock suficiente. Stock disponible: ${this.selectedProduct.currentStock}`);
+      this.showModal('Stock Insuficiente', `Solo hay ${this.selectedProduct.currentStock} unidades disponibles de este producto.`, 'error');
       return;
     }
 
@@ -73,7 +105,7 @@ export class SalesComponent implements OnInit {
     if (existingIndex > -1) {
       const newQty = this.cart[existingIndex].quantity + this.quantityToAdd;
       if (newQty > this.selectedProduct.currentStock) {
-        alert('La cantidad total excede el stock disponible.');
+        this.showModal('Stock Excedido', 'La cantidad total de este producto en el carrito excede el stock disponible.', 'error');
         return;
       }
       this.cart[existingIndex].quantity = newQty;
@@ -89,7 +121,10 @@ export class SalesComponent implements OnInit {
     }
 
     this.calculateTotal();
-    this.quantityToAdd = 1;
+    
+    // Limpiar selección para el próximo producto
+    this.clearSelection();
+    this.isDropdownOpen = false; // Cerrar dropdown después de añadir
   }
 
   removeFromCart(index: number) {
@@ -107,8 +142,6 @@ export class SalesComponent implements OnInit {
     this.isSubmitting = true;
     
     // En un entorno real se obtendría el ID de la base de datos (UUID) asociado al username.
-    // Para no bloquear la UI de demostración, mandamos null, lo que fallará en Backend 
-    // a menos que mandemos el UUID real del user. Se asume que el AuthState guarda el UUID.
     const userId = "00000000-0000-0000-0000-000000000000"; 
 
     const requestPayload = {
@@ -125,15 +158,30 @@ export class SalesComponent implements OnInit {
 
     this.inventoryService.registerMovement(requestPayload).subscribe({
       next: (res) => {
-        alert('Venta registrada exitosamente.');
-        window.location.reload(); // Recarga la página por completo
+        this.showModal('Venta Registrada', 'El comprobante de venta se ha guardado exitosamente.', 'success', () => {
+          window.location.reload(); // Recarga la página por completo
+        });
       },
       error: (err) => {
         console.error(err);
-        alert('Error al registrar la venta en Backend. Revisar consola.');
+        this.showModal('Error de Registro', 'Hubo un error al registrar la venta en el servidor. Por favor, revise la consola.', 'error');
         this.isSubmitting = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // Métodos del Modal
+  showModal(title: string, message: string, type: 'success' | 'error' | 'info', onClose: () => void = () => {}) {
+    this.modalConfig = { isVisible: true, title, message, type, onClose };
+    this.cdr.detectChanges();
+  }
+
+  closeModal() {
+    this.modalConfig.isVisible = false;
+    this.cdr.detectChanges();
+    if (this.modalConfig.onClose) {
+      this.modalConfig.onClose();
+    }
   }
 }
