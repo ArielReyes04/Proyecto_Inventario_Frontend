@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ==========================================
   # JOB 1: PROMOCIÓN A TEST
@@ -29,7 +33,8 @@ jobs:
           
       - name: Realizar Merge de Develop a Test
         run: |
-          git checkout test || git checkout -b test
+          git checkout test || git checkout -b test origin/test || git checkout -b test
+          git pull origin test || true
           git merge origin/develop --no-edit
           git push origin test
 
@@ -150,7 +155,8 @@ jobs:
           
       - name: Realizar Merge de Test a Main
         run: |
-          git checkout main
+          git checkout main || git checkout -b main origin/main || git checkout -b main
+          git pull origin main || true
           git merge origin/test --no-edit
           git push origin main
 
