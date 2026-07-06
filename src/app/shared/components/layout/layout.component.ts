@@ -13,9 +13,9 @@ import { FooterComponent } from '../footer/footer.component';
       <app-navbar></app-navbar>
       
       <div class="flex pt-16 h-screen">
-        <app-sidebar></app-sidebar>
+        <app-sidebar (toggleSidebar)="isSidebarCollapsed = $event"></app-sidebar>
         
-        <main class="ml-64 flex-1 p-8 overflow-y-auto mb-14 relative w-full h-full">
+        <main [class.ml-64]="!isSidebarCollapsed" [class.ml-20]="isSidebarCollapsed" class="flex-1 p-8 overflow-y-auto mb-14 relative w-full h-full transition-all duration-300">
           <router-outlet></router-outlet>
         </main>
       </div>
@@ -24,4 +24,6 @@ import { FooterComponent } from '../footer/footer.component';
     </div>
   `
 })
-export class LayoutComponent {}
+export class LayoutComponent {
+  isSidebarCollapsed = false;
+}

@@ -1,0 +1,138 @@
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 animate-fade-in">
+  <!-- Encabezado Estilo Nórdico (Slate/Gray) -->
+  <div class="relative overflow-hidden bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 mb-8">
+    <div class="absolute -top-24 -right-24 w-64 h-64 bg-gradient-to-br from-slate-200 to-gray-100 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+    
+    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <h1 class="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+          <div class="p-2 bg-gradient-to-br from-slate-700 to-gray-800 rounded-lg shadow-lg shadow-slate-500/30">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          </div>
+          Auditoría del Sistema
+        </h1>
+        <p class="text-slate-600 text-lg mt-2 font-medium">Historial inmutable de movimientos de inventario realizados por los usuarios.</p>
+      </div>
+      
+      <button (click)="loadMovements()" class="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Refrescar
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADER -->
+  @if (isLoading) {
+    <div class="flex justify-center items-center py-20">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-800"></div>
+    </div>
+  }
+
+  <!-- TABLE -->
+  @if (!isLoading) {
+    <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-100">
+          <thead class="bg-slate-50/50">
+            <tr>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha / Hora</th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Usuario Responsable</th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Comprobante</th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tipo Movimiento</th>
+              <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Valor Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50 bg-white">
+            @for (movement of movements; track movement.id) {
+              <tr class="hover:bg-slate-50/80 transition-colors cursor-pointer group" (click)="toggleDetails(movement.id)">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-600">
+                  {{ movement.movementDate | date:'dd/MM/yyyy HH:mm:ss' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 font-bold text-sm shadow-inner">
+                      {{ (movement.userName || 'S').charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="text-sm font-bold text-slate-800">
+                      {{ movement.userName || 'Sistema' }}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-slate-700">
+                  {{ movement.receiptNumber }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-3 py-1 inline-flex text-xs font-bold rounded-full" [ngClass]="getMovementTypeClass(movement.type)">
+                    {{ formatType(movement.type) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-slate-800 text-right">
+                  \${{ movement.total | number:'1.2-2' }}
+                  <svg class="inline-block w-4 h-4 ml-2 text-slate-400 group-hover:text-slate-600 transition-transform" 
+                       [class.rotate-180]="expandedRow === movement.id" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </td>
+              </tr>
+              
+              <!-- DETALLE DESPLEGABLE -->
+              @if (expandedRow === movement.id) {
+                <tr class="bg-slate-50/50">
+                  <td colspan="5" class="px-8 py-6 border-b-2 border-slate-100 shadow-inner">
+                    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <span class="text-sm font-bold text-slate-700">Detalle de Ítems Afectados</span>
+                      </div>
+                      <table class="min-w-full divide-y divide-slate-100">
+                        <thead class="bg-white">
+                          <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Producto</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Cantidad</th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Precio Unit.</th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 bg-white">
+                          @for (detail of movement.details; track detail.id) {
+                            <tr class="hover:bg-slate-50/30 transition-colors">
+                              <td class="px-6 py-3 text-sm font-bold text-slate-700">
+                                {{ detail.product?.name }} 
+                                <span class="ml-2 px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 border border-slate-200">{{ detail.product?.sku }}</span>
+                              </td>
+                              <td class="px-6 py-3 text-sm font-semibold text-slate-600 text-center bg-slate-50/30">
+                                {{ detail.quantity }}
+                              </td>
+                              <td class="px-6 py-3 text-sm font-medium text-slate-500 text-right">
+                                \${{ detail.unitPrice | number:'1.2-2' }}
+                              </td>
+                              <td class="px-6 py-3 text-sm font-black text-slate-800 text-right">
+                                \${{ detail.subtotal | number:'1.2-2' }}
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+            
+            @if (movements.length === 0) {
+              <tr>
+                <td colspan="5" class="px-6 py-16 text-center">
+                  <div class="w-16 h-16 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                    <svg class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                  </div>
+                  <h3 class="text-lg font-bold text-slate-700">Sin historial</h3>
+                  <p class="mt-1 text-sm text-slate-500">No hay movimientos registrados en el sistema todavía.</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
