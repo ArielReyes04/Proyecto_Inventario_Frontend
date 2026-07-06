@@ -45,12 +45,34 @@ export class ReconciliationComponent implements OnInit {
     return Math.abs(this.getDifference(product));
   }
 
+  // Custom Modal State
+  modalConfig = {
+    isVisible: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'info',
+    onClose: () => {}
+  };
+
+  showModal(title: string, message: string, type: 'success' | 'error' | 'info', onClose: () => void = () => {}) {
+    this.modalConfig = { isVisible: true, title, message, type, onClose };
+    this.cdr.detectChanges();
+  }
+
+  closeModal() {
+    this.modalConfig.isVisible = false;
+    this.cdr.detectChanges();
+    if (this.modalConfig.onClose) {
+      this.modalConfig.onClose();
+    }
+  }
+
   submitReconciliation() {
     const positiveItems = this.products.filter(p => this.getDifference(p) > 0);
     const negativeItems = this.products.filter(p => this.getDifference(p) < 0);
     
     if (positiveItems.length === 0 && negativeItems.length === 0) {
-      alert('No hay diferencias de stock que ajustar.');
+      this.showModal('Sin Cambios', 'No hay diferencias de stock que ajustar respecto al sistema.', 'info');
       return;
     }
 
@@ -61,8 +83,9 @@ export class ReconciliationComponent implements OnInit {
     const checkCompletion = () => {
       pendingRequests--;
       if (pendingRequests === 0) {
-        alert('Ajuste de inventario enviado al sistema exitosamente.');
-        window.location.reload(); // Recarga toda la página
+        this.showModal('Toma Física Exitosa', 'El ajuste de inventario se ha enviado al sistema exitosamente y el stock ha sido corregido.', 'success', () => {
+          window.location.reload(); // Recarga toda la página
+        });
       }
     };
 
@@ -83,8 +106,9 @@ export class ReconciliationComponent implements OnInit {
         next: () => checkCompletion(),
         error: (err) => {
           console.error(err);
-          alert('Error al enviar el ajuste positivo.');
+          this.showModal('Error', 'Hubo un error al registrar el sobrante de stock.', 'error');
           this.isSubmitting = false;
+          this.cdr.detectChanges();
         }
       });
     }
@@ -106,8 +130,9 @@ export class ReconciliationComponent implements OnInit {
         next: () => checkCompletion(),
         error: (err) => {
           console.error(err);
-          alert('Error al enviar la merma negativa.');
+          this.showModal('Error', 'Hubo un error al registrar la pérdida/merma de stock.', 'error');
           this.isSubmitting = false;
+          this.cdr.detectChanges();
         }
       });
     }
