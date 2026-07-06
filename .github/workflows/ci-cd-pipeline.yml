@@ -70,7 +70,7 @@ jobs:
       - name: Debug Output
         run: cat evidencias/frontend_tests.log
           
-      - name: SonarQube Scan
+      - name: SonarCloud Scan & Quality Gate
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -78,12 +78,7 @@ jobs:
         with:
           args: >
             -Dsonar.branch.name=master
-          
-      - name: SonarQube Quality Gate check
-        uses: SonarSource/sonarqube-quality-gate-action@master
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            -Dsonar.qualitygate.wait=true
           
       - name: Extraer Métricas y Resumen de Pruebas
         id: extract-summary
