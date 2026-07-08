@@ -132,18 +132,52 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">DNI (Cédula)</label>
-                <input type="text" formControlName="dni" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none">
+                <input type="text" formControlName="dni" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 focus:bg-white focus:ring-2 transition-all outline-none"
+                       [ngClass]="(userForm.get('dni')?.invalid && (userForm.get('dni')?.dirty || userForm.get('dni')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
+                @if (userForm.get('dni')?.invalid && (userForm.get('dni')?.dirty || userForm.get('dni')?.touched)) {
+                  <div class="text-red-500 text-xs font-bold mt-1">
+                    @if (userForm.get('dni')?.hasError('required')) {
+                      <span>La cédula/RUC es requerida.</span>
+                    }
+                    @if (userForm.get('dni')?.hasError('invalidIdLength')) {
+                      <span>Debe tener exactamente 10 (Cédula) o 13 (RUC) dígitos.</span>
+                    }
+                    @if (userForm.get('dni')?.hasError('nonNumericId')) {
+                      <span>Solo se permiten números.</span>
+                    }
+                    @if (userForm.get('dni')?.hasError('invalidProvinceCode')) {
+                      <span>El código de provincia es inválido.</span>
+                    }
+                    @if (userForm.get('dni')?.hasError('invalidRucSuffix')) {
+                      <span>El sufijo del RUC es inválido (suele ser 001).</span>
+                    }
+                    @if (userForm.get('dni')?.hasError('invalidIdCheckDigit')) {
+                      <span>El dígito verificador es incorrecto.</span>
+                    }
+                    @if (userForm.get('dni')?.hasError('invalidThirdDigit')) {
+                      <span>El tercer dígito es inválido.</span>
+                    }
+                  </div>
+                }
               </div>
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Nacionalidad</label>
-                <input type="text" formControlName="nationality" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none">
+                <input type="text" formControlName="nationality" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 focus:bg-white focus:ring-2 transition-all outline-none"
+                       [ngClass]="(userForm.get('nationality')?.invalid && (userForm.get('nationality')?.dirty || userForm.get('nationality')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
+                @if (userForm.get('nationality')?.invalid && (userForm.get('nationality')?.dirty || userForm.get('nationality')?.touched)) {
+                  <div class="text-red-500 text-xs font-bold mt-1">La nacionalidad es requerida.</div>
+                }
               </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Primer Nombre</label>
-                <input type="text" formControlName="firstName" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none">
+                <input type="text" formControlName="firstName" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 focus:bg-white focus:ring-2 transition-all outline-none"
+                       [ngClass]="(userForm.get('firstName')?.invalid && (userForm.get('firstName')?.dirty || userForm.get('firstName')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
+                @if (userForm.get('firstName')?.invalid && (userForm.get('firstName')?.dirty || userForm.get('firstName')?.touched)) {
+                  <div class="text-red-500 text-xs font-bold mt-1">El primer nombre es requerido.</div>
+                }
               </div>
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Segundo Nombre</label>
@@ -154,22 +188,51 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Apellidos</label>
-                <input type="text" formControlName="lastName" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none">
+                <input type="text" formControlName="lastName" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 focus:bg-white focus:ring-2 transition-all outline-none"
+                       [ngClass]="(userForm.get('lastName')?.invalid && (userForm.get('lastName')?.dirty || userForm.get('lastName')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
+                @if (userForm.get('lastName')?.invalid && (userForm.get('lastName')?.dirty || userForm.get('lastName')?.touched)) {
+                  <div class="text-red-500 text-xs font-bold mt-1">Los apellidos son requeridos.</div>
+                }
               </div>
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Teléfono</label>
-                <input type="text" formControlName="phoneNumber" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none">
+                <input type="text" formControlName="phoneNumber" (input)="onPhoneInput($event)" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 focus:bg-white focus:ring-2 transition-all outline-none"
+                       [ngClass]="(userForm.get('phoneNumber')?.invalid && (userForm.get('phoneNumber')?.dirty || userForm.get('phoneNumber')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
+                @if (userForm.get('phoneNumber')?.invalid && (userForm.get('phoneNumber')?.dirty || userForm.get('phoneNumber')?.touched)) {
+                  <div class="text-red-500 text-xs font-bold mt-1">
+                    @if (userForm.get('phoneNumber')?.hasError('required')) {
+                      <span>El teléfono es requerido.</span>
+                    }
+                    @if (userForm.get('phoneNumber')?.hasError('pattern')) {
+                      <span>Debe tener al menos 9 dígitos y solo números.</span>
+                    }
+                  </div>
+                }
               </div>
             </div>
             
             <div class="group relative mb-5">
               <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Dirección Domiciliaria</label>
-              <input type="text" formControlName="address" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none">
+              <input type="text" formControlName="address" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 focus:bg-white focus:ring-2 transition-all outline-none"
+                     [ngClass]="(userForm.get('address')?.invalid && (userForm.get('address')?.dirty || userForm.get('address')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
+              @if (userForm.get('address')?.invalid && (userForm.get('address')?.dirty || userForm.get('address')?.touched)) {
+                <div class="text-red-500 text-xs font-bold mt-1">La dirección domiciliaria es requerida.</div>
+              }
             </div>
             
             <div class="group relative">
               <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Correo Electrónico Personal</label>
-              <input type="email" formControlName="email" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none">
+              <input type="email" formControlName="email" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 focus:bg-white focus:ring-2 transition-all outline-none"
+                     [ngClass]="(userForm.get('email')?.invalid && (userForm.get('email')?.dirty || userForm.get('email')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
+              @if (userForm.get('email')?.invalid && (userForm.get('email')?.dirty || userForm.get('email')?.touched)) {
+                <div class="text-red-500 text-xs font-bold mt-1">
+                  @if (userForm.get('email')?.hasError('required')) {
+                    <span>El correo es requerido.</span>
+                  } @else {
+                    <span>Correo no válido.</span>
+                  }
+                </div>
+              }
             </div>
           </div>
 
@@ -183,13 +246,17 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">Rol de Acceso</label>
-                <select formControlName="role" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-800 font-bold focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all outline-none appearance-none">
+                <select formControlName="role" class="w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-slate-800 font-bold focus:bg-white focus:ring-2 transition-all outline-none appearance-none"
+                        [ngClass]="(userForm.get('role')?.invalid && (userForm.get('role')?.dirty || userForm.get('role')?.touched)) ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200'">
                   <option value="">Seleccione un Rol...</option>
                   <option value="Administrador">Administrador</option>
                   <option value="Encargado de Bodega">Encargado de Bodega</option>
                   <option value="Vendedor">Vendedor</option>
                   <option value="Asistente de Compras">Asistente de Compras</option>
                 </select>
+                @if (userForm.get('role')?.invalid && (userForm.get('role')?.dirty || userForm.get('role')?.touched)) {
+                  <div class="text-red-500 text-xs font-bold mt-1">El rol de acceso es requerido.</div>
+                }
               </div>
               <div class="group relative">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-indigo-600 transition-colors">
