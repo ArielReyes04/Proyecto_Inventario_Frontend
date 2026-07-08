@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
+import { ecuadorianIdValidator } from '../../../core/validators/ecuadorian-id.validator';
 
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -57,12 +58,12 @@ export class UsersComponent implements OnInit {
   selectedUser: any = null;
 
   userForm: FormGroup = this.fb.group({
-    dni: ['', Validators.required],
+    dni: ['', [Validators.required, ecuadorianIdValidator()]],
     firstName: ['', Validators.required],
     middleName: [''],
     lastName: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    phoneNumber: ['', Validators.required],
+    email: ['', [Validators.required, Validators.pattern('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')]],
+    phoneNumber: ['', [Validators.required, Validators.pattern('^[0-9]{9,}$')]],
     address: ['', Validators.required],
     nationality: ['Ecuatoriana', Validators.required],
     role: ['', Validators.required],
@@ -70,6 +71,15 @@ export class UsersComponent implements OnInit {
     password: [''],
     confirmPassword: ['']
   }, { validators: passwordMatchValidator });
+
+  onPhoneInput(event: any) {
+    const input = event.target;
+    let sanitized = input.value.replace(/[^0-9]/g, '');
+    if (input.value !== sanitized) {
+      input.value = sanitized;
+      this.userForm.get('phoneNumber')?.setValue(sanitized);
+    }
+  }
 
   ngOnInit() {
     this.loadUsers();
